@@ -1,29 +1,92 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { AuthProvider } from '@/contexts/authContext';
+import AppThemeProvider from '@/theme/ThemeProvider';
+import {
+	Roboto_100Thin,
+	Roboto_300Light,
+	Roboto_400Regular,
+	Roboto_500Medium,
+	Roboto_700Bold,
+	Roboto_900Black,
+} from '@expo-google-fonts/roboto';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import * as SplashScreen from 'expo-splash-screen';
+import React, { useEffect } from 'react';
+import { Platform } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+// Keep the splash screen visible while we load fonts
+SplashScreen.preventAutoHideAsync();
+
+// const RNStack = createStackNavigator();
+// const Stack = withLayoutContext(RNStack.Navigator);
+
+
+const StackLayout = () => {
+
+	return (
+		<SafeAreaProvider>
+			<Stack
+				screenOptions={{
+					headerShown: false,
+				}}
+			>
+				<Stack.Screen name='/(modals)/profileModal' options={{
+					presentation: 'modal',
+				}}
+				/>
+				<Stack.Screen name='/(modals)/walletModal' options={{
+					presentation: 'modal',
+				}}
+				/>
+				<Stack.Screen name='/(modals)/transactionModal' options={{
+					presentation: Platform.OS === 'android' ? 'card' : 'modal',
+					...(Platform.OS === 'android' && {
+						animation: 'slide_from_bottom',
+					}),
+				}}
+				/>
+				<Stack.Screen name='/(modals)/searchModal' options={{
+					presentation: 'modal',
+				}}
+				/>
+				<Stack.Screen name='/(modals)/settingsModal' options={{
+					presentation: 'modal',
+				}}
+				/>
+			</Stack>
+		</SafeAreaProvider>
+		
+	)
+}
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+  const [fontsLoaded] = useFonts({
+    Roboto_100Thin,
+    Roboto_300Light,
+    Roboto_400Regular,
+    Roboto_500Medium,
+    Roboto_700Bold,
+    Roboto_900Black,
   });
 
-  if (!loaded) {
-    // Async font loading only occurs in development.
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    // Return null so we stay on the splash screen
     return null;
   }
 
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  );
+  	return (
+		<AuthProvider>
+			<AppThemeProvider>
+        		<StackLayout />
+      		</AppThemeProvider>
+        	{/* <StackLayout /> */}
+		</AuthProvider>
+  	);
 }

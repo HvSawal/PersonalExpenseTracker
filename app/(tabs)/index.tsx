@@ -1,75 +1,144 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import Button from '@/components/Button';
+import GlossyCard from '@/components/GlossyCard';
+import ScreenWrapper from '@/components/ScreenWrapper';
+import TransactionList from '@/components/TransactionList';
+import Typo from '@/components/Typo';
+import { colors, spacingX, spacingY } from '@/constants/theme';
+import { useAuth } from '@/contexts/authContext';
+import useFetchData from '@/hooks/useFetchData';
+import { useTheme } from '@/theme/useTheme';
+import { TransactionType } from '@/types';
+import { verticalScale } from '@/utils/styling';
+import { useRouter } from 'expo-router';
+import { limit, orderBy, where } from 'firebase/firestore';
+import * as Icons from 'phosphor-react-native';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const Home = () => {
 
-export default function HomeScreen() {
+	const { user } = useAuth();
+	const router = useRouter();
+	const { theme } = useTheme();
+
+	const constraints = [
+		where("uid", "==", user?.uid),
+		orderBy("date", "desc"),
+		limit(30)
+	];
+
+	const {data: recentTransactions, error, loading: transactionsLoading} = useFetchData<TransactionType>("transactions", constraints);
+
+	// console.log("User : ", user);
+
+    // const initLogout = async () => {
+    //     await signOut(auth);
+    //     console.log('OK Pressed');
+    // }
+
+    // const handleLogout = async () => {
+    //     Alert.alert(
+    //         'LogOut',
+    //         'Are you sure you want to logout ?',
+    //         [
+    //             //{text: 'Ask me later', onPress: () => console.log('Ask me later pressed')},
+    //             {text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel'},
+    //             {text: 'OK', onPress: () => initLogout()},
+    //         ]
+    //     )
+    //     //await signOut(auth);
+    // }
+
+    
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
-}
+    <ScreenWrapper>
+		<View style={styles.container}>
+			{/* Header */}
+			<View style={styles.header}>
+				<View style={{gap: 1}}>
+					<Typo size={16} color={theme.colors.text}>
+						Hello,
+					</Typo>
+					<Typo size={20} fontWeight={'500'} color={theme.colors.text}>
+						{user?.name}
+					</Typo>
+				</View>
+				<TouchableOpacity onPress={() => router.push('/(modals)/searchModal')} style={styles.searchIcon}>
+					<Icons.MagnifyingGlassIcon 
+						size={verticalScale(22)}
+						color={colors.neutral200}
+						weight='bold'
+					/>
+				</TouchableOpacity>
+			</View>
+
+			<ScrollView contentContainerStyle={styles.scrollViewStyle} showsVerticalScrollIndicator={false}>
+				{/* card */}
+				<View  style={styles.cardContainer}>
+					{/* <HomeCard></HomeCard> */}
+
+					<GlossyCard width={'100%'} height={180}>
+  						<Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>
+    						Your content here
+  						</Text>
+					</GlossyCard>
+				</View>
+
+				<TransactionList 
+					data={recentTransactions} 
+					loading={transactionsLoading} 
+					emptyListMessage='No Transactions Added Yet' 
+					title="Recent Transactions"
+				/>
+
+			</ScrollView>
+			<Button style={styles.floatingButton} onPress={() => router.push("/(modals)/transactionModal")}>
+				<Icons.PlusIcon
+					color={colors.black}
+					weight='bold'
+					size={verticalScale(24)}
+				/>
+			</Button>
+		</View>
+    </ScreenWrapper>
+  )
+};
+
+export default Home;
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+	container: {
+		flex: 1,
+		paddingHorizontal: spacingX._20,
+		marginTop: verticalScale(8),
+	},
+	header: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		marginBottom: spacingY._10,
+	},
+	searchIcon: {
+		backgroundColor: colors.neutral700,
+		padding: spacingX._10,
+		borderRadius: 50,
+	},
+	floatingButton: {
+		height: verticalScale(50),
+		width: verticalScale(50),
+		borderRadius: 100,
+		position: 'absolute',
+		bottom: verticalScale(30),
+		right: verticalScale(30),
+
+	},
+	scrollViewStyle: {
+		marginTop: spacingY._10,
+		paddingBottom: verticalScale(100),
+		gap: spacingY._25,
+	},
+	cardContainer: {
+		flex: 1,
+		backgroundColor: 'red'
+	}
 });
